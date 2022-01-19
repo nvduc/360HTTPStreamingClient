@@ -12,13 +12,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class Client7 {
+public class Client3 {
 	
 	/* Global Variables */
 	public static int SEG_LEN = 32;        /* Number of frames per segment */
 	public static double VIEWPORT_SIZE = 960 * 960;
 	public static int N_frame = 1792;      /* Number of frames */
-	public static int N_seg = 56;          /* Number of segment (adaptation intervals) */
+	public static int N_seg = 56;          /* Number of segment (adaptation intervals) */    
 	public static int N_tile = 64;         /* Number of tiles */
 	public static int N_version = 9;       /* Number of versions */
 	public static double[][][] tile_BR = new double[N_seg][N_tile][N_version];          /* Tiles' bitrates */
@@ -29,7 +29,7 @@ public class Client7 {
 	public static double[] bandwidth_trace=new double[200];
 	public static double[] time_trace=new double [200];
 	public static int TILE_VERSION_SELECT_METHOD = 2; // 1: EQUAL; 2: DirectRoI
-	public static int THRP_ADAPT_METHOD = 0;          // 0: Baseline; 1: Proposed
+	public static int THRP_ADAPT_METHOD = 1;          // 0: Baseline; 1: Proposed
 	public static double thres = 1.0;                 // threshold
 	
 	public static int QP_list[] = {50, 48, 44, 40, 36, 32, 28, 24, 20}; /* QP cang thap thi chat luong cang cao */
@@ -95,7 +95,7 @@ public class Client7 {
 	 reader.close();
 	 
 	 // load bandwidth trace
-	 reader = new BufferedReader(new FileReader("bandwidth_trace/Bandwidth_trace.txt"));
+	 reader = new BufferedReader(new FileReader("ngan/Bandwidth_trace.txt"));
 	 line = reader.readLine();
 	 frame_id = 0;
 	 while(frame_id < 202 && line != null) {
@@ -120,7 +120,7 @@ public class Client7 {
 
 	
 	
-    InetAddress addr = InetAddress.getByName("192.168.0.107");
+    InetAddress addr = InetAddress.getByName("192.168.1.100");
     Socket socket = new Socket(addr, 80);
     boolean autoflush = true;
     
@@ -133,9 +133,8 @@ public class Client7 {
     String tile_id_str = "";
 
     //int seg_id = 0; /* segment dau tien */
-    
-    RC = bandwidth_trace[50];
-	double t_sum=50;
+    RC = bandwidth_trace[0];
+	double t_sum=0;
     //double thrp[] = {5000, 3000, 2500,3000,4000}; // throughput for every 0.5 seconds (RC)
     //double time[] = {2.0,4.0, 6.0,8.0,15.0}; // thoi gian theo giay  double next_thrp = 0;
 	double next_thrp=0;
@@ -145,8 +144,20 @@ public class Client7 {
 	PrintWriter log_file = new PrintWriter(new FileWriter(filename));
 	log_file.printf("Time,segment_id,seg_down_thrp,RC,buffer_size,seg_down_time,buff_time,viewport_quality\n");
 
-
-    for(int seg_id = 0; seg_id < 200; seg_id++) {
+	double buffer_time_1 = 0;
+	int index = 0;
+	int N_seg_1 = N_seg;
+	int N_seg_2 = 200;
+	int seg_id_2 = N_seg_2;
+	while(seg_id_2 > 0) {
+		seg_id_2 = seg_id_2 - 56;
+		index = index + 1;
+	}
+	for(int index_1 = 0; index_1 <index ; index_1++) {
+    if(index_1 == index -1) {
+    	N_seg_1 = N_seg_2;
+    }
+    for(int seg_id = 0; seg_id < N_seg_1; seg_id++) {
     	System.out.println("----------------------------------------------------------");
     	System.out.println("segment: "+ seg_id);
     	
@@ -299,19 +310,19 @@ public class Client7 {
 	    	tile_size = tile_BR[seg_id][tile_id][tile_version[tile_id]]; // kbits = Bitrate x do dai (1)
 	    	sum_tile_BR+=tile_size;
 	    	i=0;
-	    	while(t_sum > time_trace[i+50]) i++;
-	    	if((time_trace[i+50] - t_sum) * bandwidth_trace[i+50] > tile_size) {
-	    		tile_download_time = tile_size/bandwidth_trace[i+50];
+	    	while(t_sum > time_trace[i]) i++;
+	    	if((time_trace[i] - t_sum) * bandwidth_trace[i] > tile_size) {
+	    		tile_download_time = tile_size/bandwidth_trace[i];
 	    	}	
 	    	else {
-	    		tile_download_time = (time_trace[i+50] - t_sum) + (tile_size - (time_trace[i+50]-t_sum)*bandwidth_trace[i+50])/bandwidth_trace[i+50+1];
+	    		tile_download_time = (time_trace[i] - t_sum) + (tile_size - (time_trace[i]-t_sum)*bandwidth_trace[i])/bandwidth_trace[i+1];
 	    	}
 	    	
 	    	// tinh throughput (RC) khi tai tile (tile_download_thrp)
 	    	tile_download_thrp = tile_size/tile_download_time;
 	    	seg_download_time += tile_download_time; // update tong thoi gian download tile
 			t_sum += tile_download_time;
-	    	System.out.printf("seg #%d tile #%d thrp:%.4f \n", seg_id, tile_id, tile_download_thrp);
+	    	System.out.printf("seg #%d tile #%d thrp:%.4f \n", seg_id+index_1*56, tile_id, tile_download_thrp);
 	   	
 	    }
 
@@ -372,23 +383,27 @@ public class Client7 {
 		    // update RC
 		    RC = network_thrp * thres;
 		    System.out.printf("----seg_down_time=%.4f buffering=%.4f RC=%.4f\n", seg_download_time, buffer_time_seg[seg_id],RC);
-		    log_file.printf("%.4f, %d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n", t_sum, seg_id, seg_down_thrp, RC, buffer_size_seg[seg_id], seg_download_time, buffer_time_seg[seg_id], vp_quality);	  
+		    log_file.printf("%.4f, %d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n", t_sum, seg_id+index_1*56, seg_down_thrp, RC, buffer_size_seg[seg_id], seg_download_time, buffer_time_seg[seg_id], vp_quality);	  
 	    
 		    // wait until when the next segment become available
-		    if(t_sum < 50 + (seg_id+1) * 1.0) {
-		    	delay_time = (50 + (seg_id + 1) * 1.0) - t_sum;
-		    	t_sum = 50 + (seg_id + 1) * 1.0;
+		    if(t_sum < (seg_id+1) * 1.0) {
+		    	delay_time = ( (seg_id + 1) * 1.0) - t_sum;
+		    	t_sum = (seg_id + 1) * 1.0;
 		    }else {
 		    	delay_time = 0;
 		    }
 		        
     }	
     double buffer_time = 0;
-    for(int seg_id = 0; seg_id < 50; seg_id++) {
+    for(int seg_id = 0; seg_id < 56; seg_id++) {
 		//System.out.println(buffer_time_seg[seg_id]);
 		buffer_time+=buffer_time_seg[seg_id];
 	}
-    System.out.println("buffer_time: "+ buffer_time);
+    //System.out.println("buffer_time: "+ buffer_time);
+    buffer_time_1 += buffer_time ;
+    N_seg_2 = N_seg_2 -56;
+    }
+	System.out.println("buffer_time: "+ buffer_time_1);
     log_file.close();
     socket.close();
   }
@@ -404,7 +419,7 @@ public class Client7 {
 	   
 	    
 	    out.println("GET /360video/QP_" + QP_list[tile_version] + "/tile" + tile_id_str + ".dat HTTP/1.1");
-	    out.println("Host: 192.168.0.107:80");
+	    out.println("Host: 192.168.1.100:80");
 	    out.println("Connection: Open");
 	    out.println();
 	    
