@@ -40,6 +40,8 @@ public class Client9 {
 	public static BufferedInputStream in;
 	public static double[][] tile_down_thrp = new double[N_seg][N_tile];          /* Tiles' download througphut */
 	
+	public static String ip_address = "192.168.0.107";
+	
   public static void loadInputData() throws IOException {
 	  
 	  // load tiles's bitrates, PSNR, Distortion
@@ -120,7 +122,7 @@ public class Client9 {
 
 	
 	
-    InetAddress addr = InetAddress.getByName("192.168.0.107");
+    InetAddress addr = InetAddress.getByName(ip_address);
     Socket socket = new Socket(addr, 80);
     boolean autoflush = true;
     
@@ -418,7 +420,7 @@ System.out.println("t_sum "+t_sum);
 	   
 	    
 	    out.println("GET /360video/QP_" + QP_list[tile_version] + "/tile" + tile_id_str + ".dat HTTP/1.1");
-	    out.println("Host: 192.168.0.107:80");
+	    out.println("Host: " + ip_address + ":80");
 	    out.println("Connection: Open");
 	    out.println();
 	    
