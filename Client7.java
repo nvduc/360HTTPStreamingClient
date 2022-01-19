@@ -146,7 +146,7 @@ public class Client7 {
 	log_file.printf("Time,segment_id,seg_down_thrp,RC,buffer_size,seg_down_time,buff_time,viewport_quality\n");
 
 
-    for(int seg_id = 0; seg_id < 50; seg_id++) {
+    for(int seg_id = 0; seg_id < 200; seg_id++) {
     	System.out.println("----------------------------------------------------------");
     	System.out.println("segment: "+ seg_id);
     	
